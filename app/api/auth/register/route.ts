@@ -19,7 +19,6 @@ export async function POST(req:NextRequest){
    await client.query('BEGIN');
    const pending=await client.query('SELECT shop_domain,order_id,credits FROM shopify_credit_pending WHERE email=$1 ORDER BY created_at FOR UPDATE',[email]);
    for(const p of pending.rows){
-    await client.query('SELECT pg_advisory_xact_lock(hashtext($1),hashtext($2))',[p.shop_domain,p.order_id]);
     const inserted=await client.query('INSERT INTO shopify_credit_grants(shop_domain,order_id,user_id,credits) VALUES($1,$2,$3,$4) ON CONFLICT(shop_domain,order_id) DO NOTHING RETURNING credits',[p.shop_domain,p.order_id,result.rows[0].id,p.credits]);
     if(inserted.rowCount){
      await client.query('UPDATE users SET credits=credits+$1 WHERE id=$2',[p.credits,result.rows[0].id]);
