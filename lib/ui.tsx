@@ -1,0 +1,3 @@
+import Link from 'next/link';import {User} from './db';
+export function Shell({user,children}:{user:User,children:React.ReactNode}){return <div className="layout"><aside className="sidebar"><div className="brand">AP <span>Solutions</span></div><p className="tag">ECU FILE SERVICE</p><Link className="nav" href={user.role==='admin'?'/admin':'/'}>◫ Dashboard</Link>{user.role==='dealer'&&<Link className="nav" href="/orders/new">↥ New File Request</Link>}<form action="/api/auth/logout" method="post"><button className="btn secondary" style={{marginTop:25}}>Sign out</button></form></aside><main className="main">{children}</main></div>}
+export function Status({value}:{value:string}){return <span className={'pill '+value}>{value}</span>}

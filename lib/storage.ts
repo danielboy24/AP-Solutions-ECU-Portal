@@ -1,0 +1,6 @@
+import {S3Client,PutObjectCommand,GetObjectCommand,DeleteObjectCommand} from '@aws-sdk/client-s3';import {randomUUID} from 'crypto';
+const s3=new S3Client({region:process.env.S3_REGION||'auto',endpoint:process.env.S3_ENDPOINT,forcePathStyle:process.env.S3_FORCE_PATH_STYLE==='true',credentials:{accessKeyId:process.env.S3_ACCESS_KEY_ID||'',secretAccessKey:process.env.S3_SECRET_ACCESS_KEY||''}});
+const bucket=()=>{if(!process.env.S3_BUCKET)throw Error('S3_BUCKET missing');return process.env.S3_BUCKET};
+export async function upload(file:File){const ext=file.name.toLowerCase().match(/\.(bin|ori|hex|dat|zip)$/)?.[0];if(!ext||file.size<1||file.size>20*1024*1024)throw Error('Invalid file');const key='ecu/'+randomUUID()+ext;await s3.send(new PutObjectCommand({Bucket:bucket(),Key:key,Body:Buffer.from(await file.arrayBuffer()),ContentType:'application/octet-stream',ServerSideEncryption:process.env.S3_SSE==='AES256'?'AES256':undefined}));return key}
+export async function remove(key:string){await s3.send(new DeleteObjectCommand({Bucket:bucket(),Key:key}))}
+export async function read(key:string){const obj=await s3.send(new GetObjectCommand({Bucket:bucket(),Key:key}));if(!obj.Body)throw Error('Missing object');return {bytes:await obj.Body.transformToByteArray(),length:obj.ContentLength||0}}

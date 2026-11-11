@@ -1,0 +1,1 @@
+import {NextRequest,NextResponse} from 'next/server';import {cookies} from 'next/headers';import {sameOrigin} from '../../../../lib/auth';export async function POST(req:NextRequest){if(!sameOrigin(req))return new NextResponse('Forbidden',{status:403});(await cookies()).delete('ap_session');return NextResponse.redirect(new URL('/login',req.url),303)}

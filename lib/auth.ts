@@ -1,0 +1,5 @@
+import {cookies} from 'next/headers';import {SignJWT,jwtVerify} from 'jose';import {pool,User} from './db';
+function key(){const s=process.env.SESSION_SECRET;if(!s||s.length<32)throw Error('SESSION_SECRET must have 32+ characters');return new TextEncoder().encode(s)}
+export async function signIn(u:User){const token=await new SignJWT({}).setProtectedHeader({alg:'HS256'}).setSubject(u.id).setIssuedAt().setExpirationTime('8h').sign(key());(await cookies()).set('ap_session',token,{httpOnly:true,secure:process.env.NODE_ENV==='production',sameSite:'lax',path:'/',maxAge:28800})}
+export async function getUser():Promise<User|null>{const t=(await cookies()).get('ap_session')?.value;if(!t)return null;try{const {payload}=await jwtVerify(t,key());const r=await pool.query('SELECT id,email,name,role,credits FROM users WHERE id=$1 AND active=true',[payload.sub]);return r.rows[0]||null}catch{return null}}
+export function sameOrigin(req:Request){const origin=req.headers.get('origin');const host=req.headers.get('x-forwarded-host')||req.headers.get('host');if(!origin||!host)return false;try{return new URL(origin).host===host}catch{return false}}
